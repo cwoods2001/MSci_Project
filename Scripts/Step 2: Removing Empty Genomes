@@ -1,0 +1,19 @@
+import os
+
+genomes_dir = "/users/40296019/sharedscratch/projectdata/raw_genomes"
+
+empty_genomes_file = "/users/40296019/sharedscratch/projectdata/rawrenamed_genomes/EmptyGenomes.txt"
+
+with open(empty_genomes_file, "r") as file:
+    empty_genomes = {line.strip() for line in file}
+
+for genome in empty_genomes:
+    genome_path = os.path.join(genomes_dir, genome)
+    
+    if os.path.exists(genome_path):
+        os.remove(genome_path)
+        print(f"Deleted: {genome}")
+    else:
+        print(f"File not found: {genome}")
+
+print("Finished removing empty genomes.")
