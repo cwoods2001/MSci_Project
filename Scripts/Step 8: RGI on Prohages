@@ -1,0 +1,20 @@
+#This Bash script is designed to run RGI ) on all prorivus .fna files in the  directory. 
+
+#!/bin/bash
+#SBATCH --job-name=ProvirusRGI
+#SBATCH --output=ProvirusRGI24Jan25.out
+#SBATCH --error=ProvirusRGI24Jan25.err
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=k2-medpri
+
+common_output_dir="Provirus_RGI_Results"
+mkdir -p "$common_output_dir"
+
+for i in *.fna; do
+    base_name=$(basename "$i" .fna)
+
+    rgi main -i "$i" -o "$common_output_dir/${base_name}_RGI" -n 8
+done
