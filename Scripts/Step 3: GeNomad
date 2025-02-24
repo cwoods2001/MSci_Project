@@ -1,0 +1,27 @@
+#This step involves running the Genomad pipeline on the batch of genome sequences for analysis and annotation. 
+
+#!/bin/bash
+#SBATCH --job-name=genomad_22Nov24
+#SBATCH --output=genomad_22nov24.out
+#SBATCH --error=genomad_22nov24.err
+#SBATCH --time=23:59:59
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=64G
+#SBATCH --partition=k2-medpri
+
+module load mamba/1.3.1
+mamba activate genomad_12nov24
+
+mkdir -p "/users/40296019/sharedscratch/projectdata/processed_data/genomad_outputs"
+
+input_dir="/users/40296019/sharedscratch/projectdata/rawgenomes"
+database_dir="/users/40296019/sharedscratch/projectdata/processed_data/genomad_outputs"
+
+for input_file in "$input_dir"/*.fna; do
+    base_name=$(basename "$input_file" .fna)
+    file_output_dir="$database_dir/${base_name}_genomad"
+
+    mkdir -p "$file_output_dir"  
+    genomad end-to-end "$input_file" "$file_output_dir" genomad_db --threads 10
+done
