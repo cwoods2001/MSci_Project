@@ -1,0 +1,46 @@
+#Klebsiella pneumoniae isolates were retrieved from the BV-BRC database led by 3 separate CSV files, one for each selected antibiotic, using the following sbatch scripts: 
+
+#1. 
+#!/bin/bash
+#SBATCH --job-name=DownloadedGenomes_Ciprofloxacin
+#SBATCH --error=DownloadedGenomes_Ciprofloxacin.error
+#SBATCH --output=DownloadedGenomes_Ciprofloxacin.log
+#SBATCH --partition=k2-hipri
+#SBATCH --time=03:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=1
+
+for i in $(cat GenomeIDs_Ciprofloxacin.csv)
+do
+        wget -N "ftp://ftp.bvbrc.org/genomes/$i/$i.fna"
+done
+
+#2. 
+#!/bin/bash
+#SBATCH --job-name=DownloadedGenomes_Meropenem
+#SBATCH --error=DownloadedGenomes_Meropenem.error
+#SBATCH --output=DownloadedGenomes_Meropenem.log
+#SBATCH --partition=k2-hipri
+#SBATCH --time=03:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=1
+
+for i in $(tail -n +2 GenomeIDs_Meropenem.csv)
+do
+    wget -N "ftp://ftp.bvbrc.org/genomes/$i/$i.fna"
+done
+
+#3. 
+#!/bin/bash
+#SBATCH --job-name=DownloadedGenomes_Gentamicin
+#SBATCH --error=DownloadedGenomes_Gentamicin.error
+#SBATCH --output=DownloadedGenomes_Gentamicin.log
+#SBATCH --partition=k2-hipri
+#SBATCH --time=03:00:00
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=1
+
+for i in $(cat GenomeIDs_Gentamicin.csv)
+do
+        wget -N "ftp://ftp.bvbrc.org/genomes/$i/$i.fna"
+done
