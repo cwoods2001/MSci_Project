@@ -1,4 +1,4 @@
-#This python script extracts phage coordinates from _virus_summary.tsv files in multiple directories and saves them to a CSV file (phage_coordinates.csv).
+#This python script extracts phage coordinates from _virus_summary.tsv files in the GeNomad output directories and saves them to a CSV file (phage_coordinates.csv).
 
 import os
 import csv
