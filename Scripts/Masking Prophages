@@ -1,0 +1,39 @@
+#This Python script masks regions in the genomic sequences by replacing specified nucleotide ranges with ‘N’. 
+
+import os
+from Bio import SeqIO
+from Bio.Seq import MutableSeq
+import pandas as pd
+
+coordinates_file = "/users/40296019/sharedscratch/projectdata/processed_data/provirus_fnas/indiv_provirus_fastas/phage_coordinates.csv"
+genomes_dir = "/users/40296019/sharedscratch/projectdata/raw_genomes" 
+output_dir = "/users/40296019/sharedscratch/projectdata/processed_data/masked_genomes"
+
+os.makedirs(output_dir, exist_ok=True)
+
+coordinates = pd.read_csv(coordinates_file)
+
+def mask_genome(genome_id, coords, genomes_dir, output_dir):
+    genome_file = f"{genome_id}.fna.renamed"
+    genome_path = os.path.join(genomes_dir, genome_file)
+    output_path = os.path.join(output_dir, genome_file)
+
+    if not os.path.exists(genome_path):
+        print(f"WARNING: File {genome_file} not found in {genomes_dir}")
+        return
+
+    genome_record = next(SeqIO.parse(genome_path, "fasta"))
+    mutable_seq = MutableSeq(str(genome_record.seq))  # Convert to MutableSeq
+
+    for _, row in coords.iterrows():
+        start, end = int(row['Nucleotide_From']), int(row['Nucleotide_To'])
+        mutable_seq[start-1:end] = 'N' * (end - start + 1)  
+
+    genome_record.seq = mutable_seq  # Assign MutableSeq back to the SeqRecord
+    SeqIO.write(genome_record, output_path, "fasta")
+    print(f"Masked genome saved to {output_path}")
+
+for genome_id, group in coordinates.groupby('GenomeID'):
+    mask_genome(genome_id, group, genomes_dir, output_dir)
+
+print("Masking complete!")
