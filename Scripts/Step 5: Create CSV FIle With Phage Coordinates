@@ -1,0 +1,34 @@
+#This python script extracts phage coordinates from _virus_summary.tsv files in multiple directories and saves them to a CSV file (phage_coordinates.csv).
+
+import os
+import csv
+
+base_dir = "/users/40296019/sharedscratch/projectdata/processed_data/genomad_outputs"
+output_file = "/users/40296019/sharedscratch/genomesbyantibiotic/phage_coordinates.csv"
+
+with open(output_file, "w", newline="") as out_csv:
+    csv_writer = csv.writer(out_csv)
+    csv_writer.writerow(["isolate", "start", "end"])
+
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if file.endswith("_virus_summary.tsv"):  # Identify relevant summary files
+                summary_path = os.path.join(root, file)
+
+                with open(summary_path, "r") as summary_file:
+                    for line in summary_file:
+                        if line.startswith("seq_name"):
+                            continue
+
+                        columns = line.strip().split("\t")
+                        seq_name = columns[0]
+                        coordinates = columns[3] 
+
+                        try:
+                            start, end = map(int, coordinates.split("-"))
+                            csv_writer.writerow([seq_name, start, end])  # Write to the output CSV
+                        except ValueError:
+                            print(f"Skipping invalid coordinates in file {summary_path}: {coordinates}")
+                            continue
+
+print(f"Coordinates successfully written to {output_file}")
