@@ -1,0 +1,31 @@
+#This Bash script automates the process of running RGI on all .fna files in the masked genomes directory.
+
+#!/bin/bash
+#SBATCH --job-name=RGIMaskedBacteria
+#SBATCH --output=RGIMaskedBacteria24Jan25.out
+#SBATCH --error=RGIMaskedBacteria24Jan25.err
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=24G
+#SBATCH --partition=k2-medpri
+
+for i in *.fna; do
+    base_name=$(basename "$i" .fna)
+    output_dir="${base_name}_RGI"
+    output_prefix="${output_dir}/${base_name}"
+
+    mkdir -p "$output_dir"
+
+    echo "Processing file: $i"
+    if [[ -f "$i" ]]; then
+        rgi main -i "$i" -o "$output_prefix" -n 6 --low_quality
+        if [[ $? -ne 0 ]]; then
+            echo "Error processing $i" >&2
+        else
+            echo "Successfully processed $i"
+        fi
+    else
+        echo "File $i not found or is not accessible." >&2
+    fi
+done
