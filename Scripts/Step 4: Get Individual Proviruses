@@ -1,0 +1,19 @@
+#This script processes multiple *_virus.fna files, extracts individual contigs from each genome file, renames them, and saves them as separate .fna files.
+
+for input_file in *_virus.fna;
+do
+    GENOME_ID="${input_file/_virus.fna/}"
+
+    while IFS= read -r line; do
+        if [[ $line == ">"* ]]; then
+            seq_header="${line#>}"
+            contig_ID="$(echo $seq_header | cut -d' ' -f1 | sed 's/|/-/g')"
+            output_file="${GENOME_ID}_${contig_ID}.fna"
+            # If its a header line, create a new file
+            echo "${line/|/-}" | sed "s/>/>${GENOME_ID}_/g" > "$output_file"
+        else
+            # If its a sequence line, append it to the current new file
+            echo "$line" >> "$output_file"
+        fi
+    done < $input_file
+done
