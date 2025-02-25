@@ -12,4 +12,4 @@ df.replace({'Resistant': 1, 'Susceptible': 0}, inplace=True)
 # Save the modified DataFrame to a new CSV file
 df.to_csv(output_file, index=False)
 
-print(f"✅ Binary resistance data saved to {output_file}")
+print(f" Binary resistance data saved to {output_file}")
