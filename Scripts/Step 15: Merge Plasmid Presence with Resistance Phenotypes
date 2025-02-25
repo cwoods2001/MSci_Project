@@ -1,0 +1,22 @@
+import pandas as pd
+
+plasmid_file = "plasmid_presence_absence_matrix.csv"  
+phenotype_file = "Combined_Antibiotics_Phenotypes.csv"  
+
+plasmid_df = pd.read_csv(plasmid_file)
+
+phenotype_df = pd.read_csv(phenotype_file)
+
+phenotype_df.replace({"Resistant": 1, "Susceptible": 0}, inplace=True)
+
+merged_df = plasmid_df.merge(phenotype_df, on="Genome", how="inner")
+
+cipro_df = merged_df[["Genome"] + list(plasmid_df.columns[1:]) + ["Ciprofloxacin"]]
+gentamicin_df = merged_df[["Genome"] + list(plasmid_df.columns[1:]) + ["Gentamicin"]]
+meropenem_df = merged_df[["Genome"] + list(plasmid_df.columns[1:]) + ["Meropenem"]]
+
+cipro_df.to_csv("plasmid_presence_with_cipro.csv", index=False)
+gentamicin_df.to_csv("plasmid_presence_with_gentamicin.csv", index=False)
+meropenem_df.to_csv("plasmid_presence_with_meropenem.csv", index=False)
+
+print("CSV files successfully created:")
