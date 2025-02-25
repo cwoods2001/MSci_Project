@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#SBATCH --job-name=Prokka12Dec24
+#SBATCH --error=Prokka12Dec24.error
+#SBATCH --output=Prokka12Dec24.log
+#SBATCH --partition=k2-lowpri
+#SBATCH --time=3-00:00:00
+#SBATCH --mem=24G#SBATCH --cpus-per-task=8
+
+
+GENOME_DIR="/users/40296019/sharedscratch/projectdata/raw_genomes"
+OUTPUT_DIR="/users/40296019/sharedscratch/projectdata/processed_data/prokka_output"
+mkdir -p "${OUTPUT_DIR}"
+
+for file in "${GENOME_DIR}"/*.fna; do
+    if [[ "$file" != *.fna.renamed ]]; then
+        BASENAME=$(basename "$file" .fna)
+        echo "Processing $file..."
+        prokka --prefix "${file/.fna/}" --cpus 8  --outdir "${OUTPUT_DIR}/${BASENAME}" --prefix "${BASENAME}" "$file"
+    fi
+done
