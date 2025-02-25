@@ -21,8 +21,8 @@ df = df.dropna(subset=["Ciprofloxacin_Resistance"])
 
 df["Ciprofloxacin_Resistance"] = df["Ciprofloxacin_Resistance"].astype(int)
 
-X = df.drop(columns=["Ciprofloxacin_Resistance"])  # Features (plasmid presence/absence)
-y = df["Ciprofloxacin_Resistance"]  # Target (resistance status)
+X = df.drop(columns=["Ciprofloxacin_Resistance"])  
+y = df["Ciprofloxacin_Resistance"]  
 
 X = X.fillna(0)
 
