@@ -1,0 +1,26 @@
+import pandas as pd
+
+input_file = "plasmid_presence_with_coordinates.csv"  
+df = pd.read_csv(input_file)
+
+df["Plasmids"] = df["Plasmids"].fillna("None")
+
+unique_plasmids = set()
+for plasmid_list in df["Plasmids"]:
+    if plasmid_list != "None":
+        unique_plasmids.update(plasmid_list.split(", "))
+
+presence_absence_df = pd.DataFrame(0, index=df["Genome"], columns=sorted(unique_plasmids))
+
+for index, row in df.iterrows():
+    if row["Plasmids"] != "None":
+        plasmids = row["Plasmids"].split(", ")
+        presence_absence_df.loc[row["Genome"], plasmids] = 1
+
+presence_absence_df.reset_index(inplace=True)
+presence_absence_df.rename(columns={"index": "Genome"}, inplace=True)
+
+output_file = "plasmid_presence_absence_matrix.csv"
+presence_absence_df.to_csv(output_file, index=False)
+
+print(f"Presence-absence matrix saved as {output_file}")
