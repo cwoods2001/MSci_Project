@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=coinfinder
+#SBATCH --output=coinfinder_output
+#SBATCH --error=coinfinder_error
+#SBATCH --time=24:00:00
+#SBATCH --mem=64G
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --partition=k2-medpri
+
+conda activate  /mnt/scratch2/igfs-anaconda/conda-envs/coinfinder_v1.2.1
+
+coinfinder -i gene_presence_absence_fixed.csv -p Kpneumoniae_phylo_18Feb25_fixed.treefile -o coinfinder_output --associate -I
