@@ -1,1 +1,21 @@
+import pandas as pd
 
+input_file = "Combined_Antibiotics_Phenotypes.csv"  
+output_file = "binary_antibiotic_phenotypes.csv"
+
+df = pd.read_csv(input_file)
+
+df = df.rename(columns={
+    "Genome ID": "Genome",
+    "Resistance Phenotype Ciprofloxacin": "Resistance Phenotype Ciprofloxacin",
+    "Resistance Phenotype Gentamicin": "Resistance Phenotype Gentamicin",
+    "Resistance Phenotype Meropenem": "Resistance Phenotype Meropenem"
+})
+
+df.replace({"Resistant": 1, "Susceptible": 0}, inplace=True)
+
+binary_df = df[["Genome", "Resistance Phenotype Ciprofloxacin", "Resistance Phenotype Meropenem", "Resistance Phenotype Gentamicin"]]
+
+binary_df.to_csv(output_file, index=False)
+
+print(f"✅ Binary resistance phenotype CSV saved as {output_file}")
