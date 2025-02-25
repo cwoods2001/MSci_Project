@@ -1,0 +1,41 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+
+file_path = "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/plasmidpresencecsvs/plasmid_presence_with_gentamicin.csv"
+
+feature_importance_file = "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/plasmidpresencecsvs/gentamicin_feature_importances.csv"
+
+df = pd.read_csv(file_path)
+
+X = df.drop(columns=["Genome", "Gentamicin_Resistance"])
+y = df["Gentamicin_Resistance"]
+
+y = y.fillna(y.mode()[0])  # Replace NaN with most frequent value
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+y_pred = rf_model.predict(X_test)
+
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+feature_importances = pd.Series(rf_model.feature_importances_, index=X.columns)
+top_features = feature_importances.sort_values(ascending=False)
+
+top_features.to_csv(feature_importance_file, header=["Importance"])
+print(f"Feature importances saved to: {feature_importance_file}")
+
+plt.figure(figsize=(10, 6))
+top_features.head(10).plot(kind='barh')
+plt.xlabel("Feature Importance")
+plt.ylabel("Plasmid Presence Features")
+plt.title("Top 10 Features Influencing Gentamicin Resistance")
+plt.gca().invert_yaxis()
+plt.show()
