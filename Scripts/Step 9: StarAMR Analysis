@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --job-name=staramr_provirus
+#SBATCH --output=staramr_provirus.out
+#SBATCH --error=staramr_provirus.err
+#SBATCH --time=12:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --partition=k2-medpri
+
+input_dir="/users/40296019/sharedscratch/projectdata/processed_data/provirus_fnas/indiv_provirus_fastas"
+output_dir="/users/40296019/sharedscratch/projectdata/processed_data/provirus_fnas/indiv_provirus_fastas/staramr_results"
+mkdir -p "$output_dir"
+
+for fna_file in "$input_dir"/*.fna; do
+    base_name=$(basename "$fna_file" .fna)
+    staramr search -o "$output_dir/${base_name}_results" "$fna_file"
+done
