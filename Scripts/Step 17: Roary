@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH --job-name=Roary
+#SBATCH --output=Roary.out
+#SBATCH --error=Roary.err
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=k2-medpri
+
+roary -e --mafft -p 8 -f roary_output *.gff
