@@ -1,0 +1,29 @@
+#!/bin/bash
+#SBATCH --job-name=PlasmidFinder
+#SBATCH --output=Plasmid.out
+#SBATCH --error=Plasmid.err
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=k2-medpri
+
+OUTPUT_DIR="output_dir"
+BLAST_PATH="/mnt/scratch2/igfs-anaconda/conda-envs/ncbi-blast/bin/blastn"
+PLASMID_DB="/mnt/scratch2/igfs-anaconda/conda-envs/plasmidfinder_v2.1.6/share/plasmidfinder-2.1.6/database"
+
+mkdir -p "$OUTPUT_DIR"
+
+for fna_file in *.fna; do
+    sample_name=$(basename "$fna_file" .fna)
+    sample_output_dir="$OUTPUT_DIR/$sample_name"
+
+
+    mkdir -p "$sample_output_dir"
+
+    echo "Processing: $sample_name"
+
+    plasmidfinder.py -i "$fna_file" -o "$sample_output_dir" \
+        -mp "$BLAST_PATH" -p "$PLASMID_DB" -l 0.80 -t 0.95 > "$sample_output_dir/$sample_name.plasmids.txt"
+
+done
