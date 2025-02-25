@@ -1,0 +1,49 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+data_file = "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/plasmidpresencecsvs/plasmid_presence_with_cipro.csv"
+output_feature_importance = "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/plasmidpresencecsvs/plasmid_feature_importance.csv"
+
+df = pd.read_csv(data_file)
+
+if "Genome" in df.columns:
+    df = df.drop(columns=["Genome"])
+
+if "Ciprofloxacin_Resistance" not in df.columns:
+    raise ValueError("Ciprofloxacin_Resistance column not found in dataset!")
+
+df["Ciprofloxacin_Resistance"] = pd.to_numeric(df["Ciprofloxacin_Resistance"], errors="coerce")
+
+df = df.dropna(subset=["Ciprofloxacin_Resistance"])
+
+df["Ciprofloxacin_Resistance"] = df["Ciprofloxacin_Resistance"].astype(int)
+
+X = df.drop(columns=["Ciprofloxacin_Resistance"])  # Features (plasmid presence/absence)
+y = df["Ciprofloxacin_Resistance"]  # Target (resistance status)
+
+X = X.fillna(0)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+rf_model.fit(X_train, y_train)
+
+y_pred = rf_model.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+
+print(f"Random Forest Model Accuracy: {accuracy:.4f}")
+print("\nConfusion Matrix:\n", conf_matrix)
+print("\nClassification Report:\n", class_report)
+
+feature_importances = pd.DataFrame({'Feature': X.columns, 'Importance': rf_model.feature_importances_})
+feature_importances = feature_importances.sort_values(by="Importance", ascending=False)
+
+feature_importances.to_csv(output_feature_importance, index=False)
+
+print(f"\n Feature importance saved to {output_feature_importance}")
