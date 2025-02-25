@@ -1,0 +1,33 @@
+import os
+import pandas as pd
+
+base_dir = "/users/40296019/sharedscratch/projectdata/processed_data/plasmidfinder_outputs"
+output_csv = "plasmid_presence_with_coordinates.csv"
+
+data = []
+
+for genome_folder in os.listdir(base_dir):
+    genome_path = os.path.join(base_dir, genome_folder)
+    
+    if os.path.isdir(genome_path):
+        plasmid_file = os.path.join(genome_path, f"{genome_folder}.plasmids.txt")
+
+        if os.path.exists(plasmid_file):  
+            with open(plasmid_file, "r") as f:
+                plasmid_list = []
+                for line in f:
+                    if line.strip():
+                        parts = line.strip().split("\t")  # Ensure tab-separated format
+                        if len(parts) >= 3:  # Ensure correct format
+                            plasmid_name = parts[0]  
+                            start = parts[1]        
+                            end = parts[2]          
+                            plasmid_list.append(f"{plasmid_name} ({start}..{end})")
+
+                plasmids = ", ".join(plasmid_list) if plasmid_list else "None"
+                data.append([genome_folder, plasmids])
+
+df = pd.DataFrame(data, columns=["Genome", "Plasmids"])
+df.to_csv(output_csv, index=False)
+
+print(f"Plasmid presence data saved to {output_csv}")
