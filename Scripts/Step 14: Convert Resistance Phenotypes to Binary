@@ -1,15 +1,1 @@
-import pandas as pd
 
-# Load the CSV file
-input_file = "Combined_Antibiotics_Phenotypes.csv"
-output_file = "Antibiotic_Resistance_Binary.csv"
-
-df = pd.read_csv(input_file)
-
-# Replace 'Resistant' with 1 and 'Susceptible' with 0 in the entire DataFrame
-df.replace({'Resistant': 1, 'Susceptible': 0}, inplace=True)
-
-# Save the modified DataFrame to a new CSV file
-df.to_csv(output_file, index=False)
-
-print(f" Binary resistance data saved to {output_file}")
