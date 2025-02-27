@@ -1,0 +1,49 @@
+import pandas as pd
+import re
+
+arg_df = pd.read_csv("compiled_ARG_coordinates.csv", dtype=str)
+
+plasmid_df = pd.read_csv("plasmid_presence_with_coordinates.csv", dtype=str)
+
+plasmid_df["Plasmids"] = plasmid_df["Plasmids"].fillna("None").astype(str)
+
+plasmid_dict = {}
+
+for _, row in plasmid_df.iterrows():
+    genome = str(row["Genome"]).strip()  # Ensure consistent formatting
+    plasmids = row["Plasmids"]
+
+    if isinstance(plasmids, str) and plasmids != "None":
+        plasmid_entries = []
+
+        matches = re.findall(r"([\w\(\)/]+) \((\d+)\.\.(\d+)\)", plasmids)
+        for match in matches:
+            plasmid_name, start, stop = match[0], int(match[1]), int(match[2])
+            plasmid_entries.append((plasmid_name, start, stop))
+
+        plasmid_dict[genome] = plasmid_entries
+    else:
+        plasmid_dict[genome] = []
+
+def check_plasmid(genome, start, stop):
+    try:
+        start, stop = int(start), int(stop)  # Convert coordinates to integers
+    except ValueError:
+        return "None", "Chromosome" 
+
+    genome = str(genome).strip()  # Ensure consistent formatting
+
+    if genome in plasmid_dict:
+        for plasmid_name, p_start, p_stop in plasmid_dict[genome]:
+            # If the gene falls within a plasmid's range
+            if p_start <= start <= p_stop or p_start <= stop <= p_stop:
+                return plasmid_name, "Plasmid"
+
+    return "None", "Chromosome"
+
+arg_df[["Plasmid", "Location_Type"]] = arg_df.apply(
+    lambda row: check_plasmid(str(row["Genome_ID"]), row["Start"], row["Stop"]), axis=1, result_type="expand"
+)
+
+arg_df.to_csv("ARG_with_Plasmid_Info.csv", index=False)
+print("File saved: ARG_with_Plasmid_Info.csv")
