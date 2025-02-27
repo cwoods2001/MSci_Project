@@ -1,0 +1,51 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+import joblib
+import os
+
+plasmid_files = {
+    "Ciprofloxacin": "AMR_Genes_Plasmid_Resistance_Phenotype_Ciprofloxacin.csv",
+    "Meropenem": "AMR_Genes_Plasmid_Resistance_Phenotype_Meropenem.csv",
+    "Gentamicin": "AMR_Genes_Plasmid_Resistance_Phenotype_Gentamicin.csv"
+}
+
+for antibiotic, file_name in plasmid_files.items():
+    print(f"Processing: {file_name}")
+
+    df = pd.read_csv(file_name)
+
+    target_col = f"Resistance Phenotype {antibiotic}"
+
+    df = df.dropna(subset=[target_col])
+
+    X = df.drop(columns=["Genome_ID", target_col], errors='ignore')  # Drop Genome_ID & target
+    y = df[target_col].astype(int)  # Ensure target is an integer
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy for {antibiotic}: {accuracy:.4f}")
+    print(classification_report(y_test, y_pred))
+
+    model_filename = f"random_forest_plasmidamrgenes_{antibiotic.lower()}.pkl"
+    joblib.dump(model, model_filename)
+    print(f"Model saved: {model_filename}")
+
+    feature_importances = pd.DataFrame({
+        'Feature': X.columns,
+        'Importance': model.feature_importances_
+    }).sort_values(by='Importance', ascending=False)
+
+    feature_importances_filename = f"feature_importances_plasmidamrgenes_{antibiotic.lower()}.csv"
+    feature_importances.to_csv(feature_importances_filename, index=False)
+    print(f"Feature importances saved: {feature_importances_filename}")
+
+print("All models trained and saved successfully!")
