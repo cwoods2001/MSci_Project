@@ -1,11 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=Roary
-#SBATCH --output=Roary.out
-#SBATCH --error=Roary.err
+#SBATCH --job-name=Roary27feb25
+#SBATCH --output=Roary27feb25.out
+#SBATCH --error=Roary27feb25.err
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --partition=k2-medpri
 
+# Run Roary on all modified final GFF files
 roary -e --mafft -p 8 -f roary_output *.gff
