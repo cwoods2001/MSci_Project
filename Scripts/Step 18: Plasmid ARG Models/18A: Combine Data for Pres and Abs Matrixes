@@ -19,8 +19,8 @@ for antibiotic in antibiotics:
         selected_cols = ["Genome_ID", target_col] + [col for col in merged_df.columns if col not in ["Genome_ID"] and col != target_col]
         antibiotic_df = merged_df[selected_cols]
         antibiotic_df.to_csv(f"AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv", index=False)
-        print(f"✅ Saved: AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv")
+        print(f" Saved: AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv")
     else:
-        print(f"⚠️ Warning: {target_col} not found in dataset!")
+        print(f" Warning: {target_col} not found in dataset!")
 
-print("✅ All resistance phenotype files generated successfully!")
+print(" All resistance phenotype files generated successfully!")
