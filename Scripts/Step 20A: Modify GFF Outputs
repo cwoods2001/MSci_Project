@@ -1,0 +1,76 @@
+import os
+import sys
+
+def load_plasmid_coordinates(plasmid_file):
+    """Load plasmid start and end positions into a dictionary."""
+    plasmid_dict = {}
+    with open(plasmid_file, 'r') as f:
+        for line in f:
+            parts = line.strip().split("\t")
+            if len(parts) == 3:
+                plasmid_id, start, end = parts
+                plasmid_dict[plasmid_id] = (int(start), int(end))
+    return plasmid_dict
+
+def modify_gff(gff_file, plasmid_dict, output_file):
+    """Modify GFF file to add 'plas_' prefix where plasmid start/end positions match."""
+    with open(gff_file, 'r') as infile, open(output_file, 'w') as outfile:
+        for line in infile:
+            if line.startswith("#"):  # Keep comments unchanged
+                outfile.write(line)
+                continue
+
+            columns = line.strip().split("\t")
+            if len(columns) < 5:  # Ensure it's a valid GFF entry
+                outfile.write(line)
+                continue
+
+            start_pos, end_pos = int(columns[3]), int(columns[4])
+
+            # Check if this feature falls within a plasmid range
+            for plasmid, (plasmid_start, plasmid_end) in plasmid_dict.items():
+                if plasmid_start <= start_pos <= plasmid_end or plasmid_start <= end_pos <= plasmid_end:
+                    columns[0] = "plas_" + columns[0]  # Modify first column
+                    break  # Modify once per plasmid match
+
+            outfile.write("\t".join(columns) + "\n")
+
+def process_all_files(plasmid_dir, prokka_dir, output_dir):
+    """Loop through plasmid files and process them with their corresponding GFF files."""
+    os.makedirs(output_dir, exist_ok=True)  # Ensure output directory exists
+
+    for plasmid_file in os.listdir(plasmid_dir):
+        if not plasmid_file.endswith("_modified.txt"):
+            continue  # Skip irrelevant files
+
+        genome_id = plasmid_file.split("_")[0]  # Extract genome ID
+        plasmid_path = os.path.join(plasmid_dir, plasmid_file)
+
+        # Locate corresponding GFF file inside the genome's Prokka output directory
+        genome_folder = os.path.join(prokka_dir, genome_id)
+        gff_path = os.path.join(genome_folder, f"{genome_id}.gff")
+        output_path = os.path.join(output_dir, f"{genome_id}_modified.gff")
+
+        if not os.path.exists(gff_path):
+            print(f"Skipping {genome_id}: No GFF file found in {genome_folder}")
+            continue
+
+        print(f"Processing: {genome_id}")
+
+        plasmid_dict = load_plasmid_coordinates(plasmid_path)
+        modify_gff(gff_path, plasmid_dict, output_path)
+
+    print("✅ Batch processing completed!")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: python batch_modify_gff.py <plasmid_dir> <prokka_dir> <output_dir>")
+        sys.exit(1)
+
+    plasmid_dir = sys.argv[1]
+    prokka_dir = sys.argv[2]
+    output_dir = sys.argv[3]
+
+    process_all_files(plasmid_dir, prokka_dir, output_dir)
+
+
