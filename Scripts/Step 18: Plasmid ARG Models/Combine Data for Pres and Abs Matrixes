@@ -1,0 +1,26 @@
+import pandas as pd
+
+
+arg_df = pd.read_csv("ARG_with_Plasmid_Info.csv", dtype=str)  
+phenotype_df = pd.read_csv("binary_antibiotic_phenotypes.csv", dtype=str)  # Contains resistance phenotypes
+
+phenotype_df.rename(columns={"Genome": "Genome_ID"}, inplace=True)
+
+merged_df = phenotype_df.merge(arg_df, on="Genome_ID", how="left")
+
+merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
+
+antibiotics = ["Ciprofloxacin", "Gentamicin", "Meropenem"]
+
+for antibiotic in antibiotics:
+    target_col = f"Resistance Phenotype {antibiotic}"
+    
+    if target_col in merged_df.columns:
+        selected_cols = ["Genome_ID", target_col] + [col for col in merged_df.columns if col not in ["Genome_ID"] and col != target_col]
+        antibiotic_df = merged_df[selected_cols]
+        antibiotic_df.to_csv(f"AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv", index=False)
+        print(f"✅ Saved: AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv")
+    else:
+        print(f"⚠️ Warning: {target_col} not found in dataset!")
+
+print("✅ All resistance phenotype files generated successfully!")
