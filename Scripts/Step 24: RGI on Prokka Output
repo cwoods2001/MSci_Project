@@ -1,3 +1,8 @@
+#Replace space in header of pan_genome_reference.fa with # 
+sed '/^>/s/ /#/g' pan_genome_reference.fa > pan_genome_reference_modified.fa
+
+------
+
 #!/bin/bash
 #SBATCH --job-name=RGI_ProkkaOutput
 #SBATCH --output=RGI_ProkkaOutput.out
@@ -40,4 +45,4 @@ rgi main \
 
 conda deactivate
 
-echo "✅ RGI analysis completed successfully!"
+echo "RGI analysis completed successfully!"
