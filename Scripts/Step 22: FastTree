@@ -1,12 +1,15 @@
 #!/bin/bash
 
-#SBATCH --job-name=Fasttree_KP
-#SBATCH --error=Fasttree.error
-#SBATCH --output=Fasttree.log
+#SBATCH --job-name=Fasttree_KP_27Feb25
+#SBATCH --error=Fasttree27Feb25.error
+#SBATCH --output=Fasttree27Feb25.log
 #SBATCH --partition=k2-medpri
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=124G
 #SBATCH --cpus-per-task=16
 
-fasttree -nt -gtr < core_gene_alignment.aln > Kpneumoniae_phylo_18Feb25.treefile
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate /mnt/scratch2/igfs-anaconda/conda-envs/fasttree_v2.1.11
+
+fasttree -nt -gtr < core_gene_alignment.aln > Kpneumoniae_phylo_27Feb25.treefile
