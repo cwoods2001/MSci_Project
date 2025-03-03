@@ -1,3 +1,5 @@
+coinfinder - association
+
 #!/bin/bash
 #SBATCH --job-name=coinfinder
 #SBATCH --output=coinfinder_output
@@ -10,4 +12,22 @@
 
 conda activate  /mnt/scratch2/igfs-anaconda/conda-envs/coinfinder_v1.2.1
 
-coinfinder -i gene_presence_absence_fixed.csv -p Kpneumoniae_phylo_18Feb25_fixed.treefile -o coinfinder_output --associate -I
+coinfinder -i gene_presence_absence_modified.csv -p Kpneumoniae_phylo_associate_3March25_fixed.treefile -o coinfinder_output --associate -I
+
+---
+
+coinfinder - disassociation
+
+#!/bin/bash
+#SBATCH --job-name=dis_coinfinder
+#SBATCH --output=dis_coinfinder_output
+#SBATCH --error=dis_coinfinder_error
+#SBATCH --time=24:00:00
+#SBATCH --mem=64G
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --partition=k2-medpri
+
+conda activate  /mnt/scratch2/igfs-anaconda/conda-envs/coinfinder_v1.2.1
+
+coinfinder -i gene_presence_absence_modified.csv -p Kpneumoniae_phylo_disassociate_3March25_fixed.treefile -o dis_coinfinder_output --disassociate -I
