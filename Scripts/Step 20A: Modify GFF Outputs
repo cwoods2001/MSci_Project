@@ -1,76 +1,204 @@
 import os
-import sys
+import re
 
-def load_plasmid_coordinates(plasmid_file):
-    """Load plasmid start and end positions into a dictionary."""
-    plasmid_dict = {}
-    with open(plasmid_file, 'r') as f:
-        for line in f:
-            parts = line.strip().split("\t")
-            if len(parts) == 3:
-                plasmid_id, start, end = parts
-                plasmid_dict[plasmid_id] = (int(start), int(end))
-    return plasmid_dict
+# Define input and output directories
+input_dir = "/users/40296019/sharedscratch/projectdata/processed_data/prokka_eggnog_outputs/prokkaoutputs"
+output_dir = os.path.join(input_dir, "final_gffs2")
+os.makedirs(output_dir, exist_ok=True)  # Create output directory if it doesn't exist
 
-def modify_gff(gff_file, plasmid_dict, output_file):
-    """Modify GFF file to add 'plas_' prefix where plasmid start/end positions match."""
-    with open(gff_file, 'r') as infile, open(output_file, 'w') as outfile:
-        for line in infile:
-            if line.startswith("#"):  # Keep comments unchanged
-                outfile.write(line)
-                continue
+def process_gff_file(in_path, out_path):
+    """Read a GFF file, prefix plasmid entries, and save to a new file."""
+    try:
+        with open(in_path, 'r') as infile:
+            lines = infile.read().splitlines(keepends=True)  # read with line endings preserved
+    except Exception as e:
+        print(f"Error reading {in_path}: {e}")
+        return
 
-            columns = line.strip().split("\t")
-            if len(columns) < 5:  # Ensure it's a valid GFF entry
-                outfile.write(line)
-                continue
+    # Split into annotation lines and FASTA lines (if a FASTA section exists)
+    fasta_start = None
+    for i, line in enumerate(lines):
+        if line.startswith("##FASTA"):
+            fasta_start = i
+            break
+    if fasta_start is not None:
+        annotation_lines = lines[:fasta_start]
+        fasta_lines = lines[fasta_start:]   # include "##FASTA" line and everything after
+    else:
+        annotation_lines = lines
+        fasta_lines = []
 
-            start_pos, end_pos = int(columns[3]), int(columns[4])
+    # Identify all contigs and determine which are plasmids
+    contig_lengths = {}
+    contig_order = []
+    contig_set = set()
+    for line in annotation_lines:
+        # Parse sequence-region headers for contig lengths
+        if line.startswith("##sequence-region"):
+            parts = line.strip().split()
+            if len(parts) >= 4:
+                contig_name = parts[1]
+                try:
+                    length = int(parts[3])
+                except:
+                    length = None
+                contig_lengths[contig_name] = length
+        # Track contigs from feature lines (1st column of non-header lines)
+        if not line.startswith("#"):
+            cols = line.split('\t', maxsplit=8)
+            if cols:
+                seqid = cols[0]
+                if seqid and seqid not in contig_set:
+                    contig_set.add(seqid)
+                    contig_order.append(seqid)
 
-            # Check if this feature falls within a plasmid range
-            for plasmid, (plasmid_start, plasmid_end) in plasmid_dict.items():
-                if plasmid_start <= start_pos <= plasmid_end or plasmid_start <= end_pos <= plasmid_end:
-                    columns[0] = "plas_" + columns[0]  # Modify first column
-                    break  # Modify once per plasmid match
+    # If no lengths from headers, try to get lengths from FASTA sequences
+    if not contig_lengths and fasta_lines:
+        curr_contig = None
+        seq_len = 0
+        for line in fasta_lines:
+            if line.startswith(">"):
+                # Save length of previous contig
+                if curr_contig is not None:
+                    contig_lengths[curr_contig] = seq_len
+                # Start new contig
+                header = line[1:].strip()    # remove '>'
+                contig_name = header.split()[0]  # contig id is first token
+                curr_contig = contig_name
+                seq_len = 0
+                if contig_name and contig_name not in contig_set:
+                    contig_set.add(contig_name)
+                    contig_order.append(contig_name)
+            elif curr_contig:
+                # Accumulate sequence length
+                seq_len += len(line.strip())
+        # Store length of last contig
+        if curr_contig is not None:
+            contig_lengths[curr_contig] = seq_len
 
-            outfile.write("\t".join(columns) + "\n")
+    # Determine main vs plasmid contigs
+    plasmid_contigs = set()
+    main_contig = None
+    if contig_set:
+        if contig_lengths:
+            # Identify the longest contig as main chromosome
+            main_contig = max(contig_lengths, key=lambda c: contig_lengths.get(c, -1))
+            # If lengths are missing or equal, fall back to first in order
+            if contig_lengths.get(main_contig) is None:
+                main_contig = contig_order[0]
+        else:
+            # If no length info, assume first contig in order is main
+            main_contig = contig_order[0]
+        # All other contigs are considered plasmids
+        for contig in contig_set:
+            if contig != main_contig:
+                plasmid_contigs.add(contig)
 
-def process_all_files(plasmid_dir, prokka_dir, output_dir):
-    """Loop through plasmid files and process them with their corresponding GFF files."""
-    os.makedirs(output_dir, exist_ok=True)  # Ensure output directory exists
+    # Open output file for writing the modified GFF
+    try:
+        with open(out_path, 'w') as outfile:
+            # Process annotation lines
+            for line in annotation_lines:
+                if line.startswith("##sequence-region"):
+                    # Prefix plasmid contig name in sequence-region header if applicable
+                    match = re.match(r"(##sequence-region\s+)(\S+)(.*)", line)
+                    if match:
+                        prefix, contig_name, rest = match.groups()
+                        if contig_name in plasmid_contigs and not contig_name.startswith("plas_"):
+                            contig_name = "plas_" + contig_name
+                        # Reconstruct the line, preserving original spacing and newline
+                        new_line = prefix + contig_name + rest
+                        if line.endswith("\n") and not new_line.endswith("\n"):
+                            new_line += "\n"
+                        line = new_line
+                    # Write the (potentially modified) sequence-region line
+                    outfile.write(line)
+                elif line.startswith("#"):
+                    # Copy other header/comment lines as-is
+                    outfile.write(line)
+                else:
+                    # Process feature lines (non-header)
+                    if line.strip() == "":
+                        # Empty line (if any) is written unchanged
+                        outfile.write(line)
+                        continue
+                    cols = line.split('\t', maxsplit=8)
+                    if len(cols) < 9:
+                        # Not a standard 9-column line; write it directly
+                        outfile.write(line)
+                        continue
+                    seqid = cols[0]
+                    attrs = cols[8]  # attributes column with newline
 
-    for plasmid_file in os.listdir(plasmid_dir):
-        if not plasmid_file.endswith("_modified.txt"):
-            continue  # Skip irrelevant files
+                    # Modify if this feature is on a plasmid contig
+                    if seqid in plasmid_contigs:
+                        # Prefix the contig name (seqid) if not already prefixed
+                        if not seqid.startswith("plas_"):
+                            cols[0] = "plas_" + seqid
+                        # Process the attributes field for ID, locus_tag, Parent
+                        attrs_str = attrs.rstrip("\n")
+                        add_trailing_semicolon = False
+                        if attrs_str.endswith(";"):
+                            add_trailing_semicolon = True
+                            attrs_str = attrs_str[:-1]  # remove trailing semicolon for processing
+                        attr_pairs = attrs_str.split(';')
+                        new_attrs = []
+                        for pair in attr_pairs:
+                            if pair == "": 
+                                continue  # skip empty pairs (could happen if there was a trailing semicolon)
+                            if "=" not in pair:
+                                new_attrs.append(pair)
+                                continue
+                            key, val = pair.split('=', 1)
+                            if key in ("ID", "locus_tag", "Parent"):
+                                if not val.startswith("plas_"):
+                                    val = "plas_" + val
+                            new_attrs.append(f"{key}={val}")
+                        attrs_modified = ";".join(new_attrs)
+                        if add_trailing_semicolon:
+                            attrs_modified += ";"
+                        # Append newline at the end of the attribute string
+                        attrs_modified += "\n"
+                        cols[8] = attrs_modified
+                        # Reconstruct the line with tabs
+                        line = "\t".join(cols)
+                    # Write the (modified or unmodified) feature line
+                    outfile.write(line)
+            # Process FASTA lines, if any
+            for line in fasta_lines:
+                if line.startswith(">"):
+                    # Modify sequence header lines for plasmid contigs
+                    header = line[1:].rstrip("\n")
+                    contig_name = header.split()[0] if header else ""
+                    rest = header[len(contig_name):] if contig_name and len(header) > len(contig_name) else ""
+                    if contig_name in plasmid_contigs and not contig_name.startswith("plas_"):
+                        contig_name = "plas_" + contig_name
+                    new_header = ">" + contig_name + rest
+                    if line.endswith("\n"):
+                        new_header += "\n"
+                    outfile.write(new_header)
+                else:
+                    # Write sequence lines and the "##FASTA" line unchanged
+                    outfile.write(line)
+    except Exception as e:
+        print(f"Error writing to {out_path}: {e}")
 
-        genome_id = plasmid_file.split("_")[0]  # Extract genome ID
-        plasmid_path = os.path.join(plasmid_dir, plasmid_file)
-
-        # Locate corresponding GFF file inside the genome's Prokka output directory
-        genome_folder = os.path.join(prokka_dir, genome_id)
-        gff_path = os.path.join(genome_folder, f"{genome_id}.gff")
-        output_path = os.path.join(output_dir, f"{genome_id}_modified.gff")
-
-        if not os.path.exists(gff_path):
-            print(f"Skipping {genome_id}: No GFF file found in {genome_folder}")
-            continue
-
-        print(f"Processing: {genome_id}")
-
-        plasmid_dict = load_plasmid_coordinates(plasmid_path)
-        modify_gff(gff_path, plasmid_dict, output_path)
-
-    print("✅ Batch processing completed!")
-
-if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python batch_modify_gff.py <plasmid_dir> <prokka_dir> <output_dir>")
-        sys.exit(1)
-
-    plasmid_dir = sys.argv[1]
-    prokka_dir = sys.argv[2]
-    output_dir = sys.argv[3]
-
-    process_all_files(plasmid_dir, prokka_dir, output_dir)
+# Iterate through each subdirectory in the input folder and process GFF files
+for subdir in os.listdir(input_dir):
+    subdir_path = os.path.join(input_dir, subdir)
+    if not os.path.isdir(subdir_path):
+        continue  # skip if not a directory
+    # Look for GFF file in this subdirectory
+    gff_files = [f for f in os.listdir(subdir_path) if f.lower().endswith(".gff")]
+    if not gff_files:
+        print(f"Warning: No GFF file found in {subdir_path}")
+        continue
+    if len(gff_files) > 1:
+        print(f"Warning: Multiple GFF files found in {subdir_path}. Using '{gff_files[0]}'")
+    gff_file = gff_files[0]
+    input_gff = os.path.join(subdir_path, gff_file)
+    output_gff = os.path.join(output_dir, gff_file)
+    process_gff_file(input_gff, output_gff)
+    print(f"Processed '{input_gff}' -> '{output_gff}'")
 
 
