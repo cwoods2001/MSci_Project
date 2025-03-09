@@ -1,0 +1,1 @@
+sourmash sketch dna -p k=9 ,scaled=1000 --outdir prophagesignatures *fna
