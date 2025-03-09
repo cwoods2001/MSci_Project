@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=SourmashBacteria
+#SBATCH --output=SourmashBacteria.out
+#SBATCH --error=SourmashBacteria.err
+#SBATCH --time=72:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=k2-medpri
+
+sourmash sketch dna -p k=51,scaled=1000 --outdir bacterial_signatures *fna
+
+sourmash sketch dna -p k=9 ,scaled=1000 --outdir prophagesignatures *fna
