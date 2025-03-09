@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH --job-name=SourmashProphage
+#SBATCH --output=SourmashProphage.out
+#SBATCH --error=SourmashProphage.err
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=k2-medpri
+
+sourmash sketch dna -p k=9 ,scaled=1000 --outdir prophagesignatures *fna
