@@ -1,0 +1,86 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import joblib
+import os
+
+# Define file paths for each antibiotic
+antibiotic_files = {
+    "Ciprofloxacin": "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs/plasmid_presence_with_cipro.csv",
+    "Meropenem": "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs/plasmid_presence_with_meropenem.csv",
+    "Gentamicin": "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs/plasmid_presence_with_gentamicin.csv"
+}
+
+# Output directory
+output_dir = "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs"
+os.makedirs(output_dir, exist_ok=True)
+
+# Process each antibiotic dataset
+for antibiotic, file_path in antibiotic_files.items():
+    print(f"Processing: {file_path}")
+
+    # Load dataset
+    df = pd.read_csv(file_path)
+
+    # Identify target column
+    target_col = f"{antibiotic}_Resistance"
+    if target_col not in df.columns:
+        raise ValueError(f"❌ {target_col} column not found in dataset!")
+
+    # Drop "Genome" column if it exists
+    if "Genome" in df.columns:
+        df = df.drop(columns=["Genome"])
+
+    # Convert target variable to numeric and handle missing values
+    df[target_col] = pd.to_numeric(df[target_col], errors="coerce").fillna(0).astype(int)
+
+    # Define features (X) and target variable (y)
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+
+    # Handle NaN values in features by replacing with 0
+    X = X.fillna(0)
+
+    # Train the Random Forest Classifier on the full dataset
+    rf_model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+    rf_model.fit(X, y)
+
+    # Make predictions
+    y_pred = rf_model.predict(X)
+
+    # Model Evaluation
+    accuracy = accuracy_score(y, y_pred)
+    conf_matrix = confusion_matrix(y, y_pred)
+    class_report = classification_report(y, y_pred)
+
+    print(f"✅ Random Forest Model Accuracy for {antibiotic}: {accuracy:.4f}")
+    print("\nConfusion Matrix:\n", conf_matrix)
+    print("\nClassification Report:\n", class_report)
+
+    # Save the trained model
+    model_filename = os.path.join(output_dir, f"random_forest_plasmidamrgenes_{antibiotic.lower()}.pkl")
+    joblib.dump(rf_model, model_filename)
+    print(f"Model saved: {model_filename}")
+
+    # Feature Importance Analysis
+    feature_importances = pd.DataFrame({'Feature': X.columns, 'Importance': rf_model.feature_importances_})
+    feature_importances = feature_importances.sort_values(by="Importance", ascending=False)
+
+    # Save feature importances
+    feature_importances_filename = os.path.join(output_dir, f"feature_importances_plasmidamrgenes_{antibiotic.lower()}.csv")
+    feature_importances.to_csv(feature_importances_filename, index=False)
+    print(f"Feature importances saved: {feature_importances_filename}")
+
+    # Plot feature importances (Top 10)
+    plt.figure(figsize=(10, 6))
+    feature_importances.head(10).plot(kind='barh', x='Feature', y='Importance', legend=False)
+    plt.xlabel("Feature Importance")
+    plt.ylabel("Plasmid Presence Features")
+    plt.title(f"Top 10 Features Influencing {antibiotic} Resistance")
+    plt.gca().invert_yaxis()
+    plt.show()
+
+print("✅ All models trained, evaluated, and saved successfully!")
+
