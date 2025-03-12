@@ -1,49 +1,73 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
 import os
 
+# Define antibiotics
 antibiotics = ["Ciprofloxacin", "Meropenem", "Gentamicin"]
 
-for antibiotic in antibiotics:
-    file_name = f"AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv"
+# Set up output directory
+output_dir = "./models_allAMRGenes"
+os.makedirs(output_dir, exist_ok=True)
 
+# Process each antibiotic separately
+for antibiotic in antibiotics:
+    # Define input file
+    file_name = f"AllAMRGenes_Resistance_Phenotype_{antibiotic}.csv"
     print(f"Processing: {file_name}")
 
+    # Load data
     df = pd.read_csv(file_name)
 
+    # Identify target column
     target_col = f"Resistance Phenotype {antibiotic}"
 
+    # Drop rows with missing target values
     df = df.dropna(subset=[target_col])
 
-    X = df.drop(columns=["Genome_ID", target_col])  # Drop Genome_ID & target
+    # Define features (X) and target (y)
+    X = df.drop(columns=["Genome_ID", target_col], errors="ignore")  # Drop Genome_ID & target
     y = df[target_col].astype(int)  # Ensure target is an integer
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
+    # Train Random Forest model on **all data**
     model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
+    model.fit(X, y)
 
-    y_pred = model.predict(X_test)
+    # Predictions on **all data**
+    y_pred = model.predict(X)
 
-    accuracy = accuracy_score(y_test, y_pred)
+    # Evaluate model
+    accuracy = accuracy_score(y, y_pred)
     print(f"Accuracy for {antibiotic}: {accuracy:.4f}")
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y, y_pred))
 
-    model_filename = f"random_forest_{antibiotic.lower()}_allamrgenes.pkl"
+    # Save the trained model
+    model_filename = os.path.join(output_dir, f"random_forest_{antibiotic.lower()}_allamrgenes.pkl")
     joblib.dump(model, model_filename)
     print(f"Model saved: {model_filename}")
 
+    # Compute feature importances
     feature_importances = pd.DataFrame({
-        'Feature': X.columns,
-        'Importance': model.feature_importances_
-    }).sort_values(by='Importance', ascending=False)
+        "Feature": X.columns,
+        "Importance": model.feature_importances_
+    }).sort_values(by="Importance", ascending=False)
 
-    feature_importances_filename = f"feature_importances_{antibiotic.lower()}_allamrgenes.csv"
+    # Save feature importances
+    feature_importances_filename = os.path.join(output_dir, f"feature_importances_{antibiotic.lower()}_allamrgenes.csv")
     feature_importances.to_csv(feature_importances_filename, index=False)
     print(f"Feature importances saved: {feature_importances_filename}")
 
-print("All models trained and saved successfully!")
+    # Save predictions for further analysis
+    predictions_df = pd.DataFrame({
+        "Genome_ID": df["Genome_ID"] if "Genome_ID" in df else range(len(y)),
+        "True_Label": y,
+        "Predicted_Label": y_pred
+    })
+
+    predictions_filename = os.path.join(output_dir, f"predictions_{antibiotic.lower()}_allamrgenes.csv")
+    predictions_df.to_csv(predictions_filename, index=False)
+    print(f"Predictions saved: {predictions_filename}")
+
+print("✅ All models trained, evaluated, and saved successfully!")
