@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=AmrFinder_prophagres
+#SBATCH --output=AmrFinder_prophages.out
+#SBATCH --error=AMRFinder.prophages.err
+#SBATCH --time=72:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --partition=k2-lowpri
+
+for file in *.fna; do
+    amrfinder -n "$file" --output "${file%.fna}_amrfinder.tsv"
+done
