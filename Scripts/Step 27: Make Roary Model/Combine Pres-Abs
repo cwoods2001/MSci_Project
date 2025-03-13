@@ -1,0 +1,22 @@
+import pandas as pd
+
+plasmid_file = "gene_presence_absence10_transposed.csv"
+resistance_file = "binary_antibiotic_phenotypes.csv"
+
+plasmid_df = pd.read_csv(plasmid_file)
+
+resistance_df = pd.read_csv(resistance_file)
+
+merged_df = plasmid_df.merge(resistance_df, on="Genome", how="inner")
+
+antibiotics = {
+    "Ciprofloxacin": "roary_genefamily_presence_with_cipro.csv",
+    "Gentamicin": "roary_genefamily_with_gentamicin.csv",
+    "Meropenem": "roary_genefamily_with_meropenem.csv"
+}
+
+for antibiotic, output_file in antibiotics.items():
+    antibiotic_df = merged_df[["Genome"] + list(plasmid_df.columns[1:]) + [f"Resistance Phenotype {antibiotic}"]]
+    antibiotic_df.rename(columns={f"Resistance Phenotype {antibiotic}": f"{antibiotic}_Resistance"}, inplace=True)
+    antibiotic_df.to_csv(output_file, index=False)
+    print(f" CSV file created: {output_file}")
