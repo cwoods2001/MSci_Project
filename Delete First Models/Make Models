@@ -1,43 +1,4 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import joblib
-import os
 
-# Define file paths for each antibiotic
-antibiotic_files = {
-    "Ciprofloxacin": "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs/plasmid_presence_with_cipro.csv",
-    "Meropenem": "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs/plasmid_presence_with_meropenem.csv",
-    "Gentamicin": "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs/plasmid_presence_with_gentamicin.csv"
-}
-
-# Output directory
-output_dir = "/users/40296019/sharedscratch/projectdata/processed_data/pres_abs_csvs/prasmidpresencecsvs"
-os.makedirs(output_dir, exist_ok=True)
-
-# Process each antibiotic dataset
-for antibiotic, file_path in antibiotic_files.items():
-    print(f"Processing: {file_path}")
-
-    # Load dataset
-    df = pd.read_csv(file_path)
-
-    # Identify target column
-    target_col = f"{antibiotic}_Resistance"
-    if target_col not in df.columns:
-        raise ValueError(f"❌ {target_col} column not found in dataset!")
-
-    # Drop "Genome" column if it exists
-    if "Genome" in df.columns:
-        df = df.drop(columns=["Genome"])
-
-    # Convert target variable to numeric and handle missing values
-    df[target_col] = pd.to_numeric(df[target_col], errors="coerce").fillna(0).astype(int)
-
-    # Define features (X) and target variable (y)
-    X = df.drop(columns=[target_col])
     y = df[target_col]
 
     # Handle NaN values in features by replacing with 0
