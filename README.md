@@ -1,11 +1,11 @@
-Investigating Mobile Genetic Elements as Vectors of Antimicrobial Resistance in Klebsiella pneumoniae Using Machine Learning Techniques 
+Investigating Mobile Genetic Elements as Vectors of Antimicrobial Resistance in _Klebsiella pneumoniae_ Using Machine Learning Techniques
 
 Overview
 
 This repository contains all scripts and supplementary material for the MSci research project:
-“Investigating Mobile Genetic Elements (MGEs) as Vectors for Antimicrobial Resistance (AMR) in Klebsiella pneumoniae Using Machine Learning Techniques.”
+“Investigating Mobile Genetic Elements (MGEs) as Vectors for Antimicrobial Resistance (AMR) in _Klebsiella pneumoniae_ Using Machine Learning Techniques.”
 
-The project combines genomic analysis, mobile element detection, and interpretable machine learning models to predict resistance phenotypes and investigate the role of plasmids and bacteriophages in AMR in Klebsiella pneumoniae.
+The project combines genomic analysis, mobile element detection, and interpretable machine learning models to predict resistance phenotypes and investigate the role of plasmids and bacteriophages in AMR in _Klebsiella pneumoniae_.
 
 Repository Structure
 •	Docs/: Project report, supplementary data, and figures.
