@@ -41,7 +41,7 @@ How to Reproduce
 Each major step corresponds to a folder or script:
 •	Navigate to Scripts/
 •	Follow the scripts sequentially from Step 01 onwards.
-•	Dependencies include: Python 3, Sourmash, geNomad, RGI, Roary, Coinfinder, FastTree, Weka.
+•	Dependencies include: Python 3, Sourmash, geNomad, RGI, Prokka, Roary, Coinfinder, FastTree, Weka.
 
 (Exact versions used are noted in the full report.)
 
