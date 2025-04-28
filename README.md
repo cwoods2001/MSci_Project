@@ -23,16 +23,18 @@ Downloaded 1,057 K. pneumoniae genomes from BVBRC, filtered by antibiotic suscep
 3.	Resistance Gene Identification
 •	RGI (CARD database) for ARG annotation.
 •	Cross-validated with StarAMR and AMRFinderPlus.
-4.	Pangenome Analysis
+4.	Plasmid Identification
+•	PlasmidFinder (NCBI nucleotide database) for plasmid annotation.
+5.	Pangenome Analysis
 •	Functional annotation (Prokka).
 •	Pangenome construction (Roary).
 •	Phylogenetic tree building (FastTree).
-5.	Co-Association Analysis
+6.	Co-Association Analysis
 •	Coinfinder to detect significant gene co-associations.
-6.	Machine Learning
+7.	Machine Learning
 •	Binary phenotype labelling.
 •	Decision tree classifiers (Weka J48) for predicting resistance to ciprofloxacin, gentamicin, and meropenem.
-7.	Data Interpretation
+8.	Data Interpretation
 •	Linking plasmid vs. chromosomal origin of genes.
 •	Investigating co-dependencies between MGEs and chromosomal genes in resistance expression.
 
@@ -41,7 +43,7 @@ How to Reproduce
 Each major step corresponds to a folder or script:
 •	Navigate to Scripts/
 •	Follow the scripts sequentially from Step 01 onwards.
-•	Dependencies include: Python 3, Sourmash, geNomad, RGI, Prokka, Roary, Coinfinder, FastTree, Weka.
+•	Dependencies include: Python 3, Sourmash, geNomad, RGI, PlasmidFinder, Prokka, Roary, Coinfinder, FastTree, Weka.
 
 (Exact versions used are noted in the full report.)
 
@@ -53,5 +55,5 @@ Key Findings
 Citation
 
 If you use any part of this repository, please cite:
-C. Woods, E. T. Campbell, L. Dillon, C. Creevey  (2025). Investigating Mobile Genetic Elements as Vectors for Antimicrobial Resistance in Klebsiella pneumoniae Using Machine Learning Techniques. MSci Dissertation – Queen’s University Belfast
+C. Woods, E. B. T. Campbell, L. Dillon, C. Creevey  (2025). Investigating Mobile Genetic Elements as Vectors for Antimicrobial Resistance in Klebsiella pneumoniae Using Machine Learning Techniques. MSci Dissertation – Queen’s University Belfast
 
