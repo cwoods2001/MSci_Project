@@ -55,5 +55,5 @@ Key Findings
 Citation
 
 If you use any part of this repository, please cite:
-C. Woods, E. B. T. Campbell, L. Dillon, C. Creevey  (2025). Investigating Mobile Genetic Elements as Vectors for Antimicrobial Resistance in Klebsiella pneumoniae Using Machine Learning Techniques. MSci Dissertation – Queen’s University Belfast
+C.S. Woods, E.B.T. Campbell, L. Dillon, C.J. Creevey  (2025). Investigating Mobile Genetic Elements as Vectors for Antimicrobial Resistance in Klebsiella pneumoniae Using Machine Learning Techniques. MSci Dissertation – Queen’s University Belfast
 
